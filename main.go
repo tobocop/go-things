@@ -1,16 +1,27 @@
 package main
 
 import (
-	"log"
-	"net/http"
+	"bytes"
+	"fmt"
+
+	"github.com/tobocop/go-things/json"
 )
 
 func main() {
-	http.HandleFunc("/", handler)
+	cw := &capturingWriter{nil}
 
-	log.Fatal(http.ListenAndServe(":12345", nil))
+	json.NewEncoder(cw).Encode("some-initial-data")
+
+	json.NewEncoder(&bytes.Buffer{}).Encode("nope")
+	fmt.Println(string(cw.data))
 }
 
-func outerHandler(w http.ResponseWriter, req *http.Request) {
-	w.Write([]byte("hello"))
+type capturingWriter struct {
+	data []byte
+}
+
+func (cw *capturingWriter) Write(p []byte) (int, error) {
+	cw.data = p
+
+	return len(p), nil
 }
